@@ -6,7 +6,7 @@ const userSchema = new Schema({
     _id: String,
     name: String,
     age: Number,
-    sex: String
+    sex: Number
 });
 
 const db = mongoose.connection;

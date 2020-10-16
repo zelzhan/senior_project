@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios')
 const router = express.Router();
 const { register, getUser } = require('../services/userService')
 
@@ -20,10 +21,11 @@ router.post("/register", async (req, res, next) => {
 router.post("/predict", async (req, res, next) => {
   try {
     const metadata = await getUser(req.body.id);
-    const totaldata = metadata.concat(req.body);
+    const totaldata = Object.assign({}, metadata._doc, req.body)
     const result = await axios.post('http://localhost:5000',totaldata );
-    res.send(result)
+    res.send(String(result.data))
   } catch (error) {
+    console.error(error.stack)
     res.send(500)
   }
 });

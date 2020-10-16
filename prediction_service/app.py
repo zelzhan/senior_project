@@ -30,7 +30,9 @@ def predict():
  #       csv_reader = reader(read_obj)
         # Pass reader object to list() to get a list of lists
   #      list_of_rows = list(csv_reader)
+    result = str(model.predict(input_data)[0])
+    # print(result)
+    print(result)
+    return result
 
-    print(model.predict(input_data))
-
-    return "OK"
+    

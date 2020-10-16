@@ -51,4 +51,6 @@ mongoose.connection.on("open", (event) => {
 const mongoDB = "mongodb://127.0.0.1/test";
 mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
 
+app.listen(4000);
+
 module.exports = app;

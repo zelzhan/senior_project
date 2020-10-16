@@ -19,9 +19,10 @@ router.post("/register", async (req, res, next) => {
 
 router.post("/predict", async (req, res, next) => {
   try {
-    const result = await axios.post('https://ml-model', req.body);
+    const metadata = await getUser(req.body.id);
+    const totaldata = metadata.concat(req.body);
+    const result = await axios.post('http://localhost:5000',totaldata );
     res.send(result)
-
   } catch (error) {
     res.send(500)
   }

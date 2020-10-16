@@ -20,4 +20,17 @@ const register = async (metadata) => {
     return 'OK'
 }
 
+const getUser = async(id) => {
+    try {
+        
+        const doc = await User.findById(id);
+        return doc;
+
+    } catch (error) {
+        return error
+    }
+
+}
+
 module.exports.register = register;
+module.exports.getUser = getUser;

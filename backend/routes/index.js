@@ -42,7 +42,6 @@ router.get("/metadata", async (req, res, next) => {
 
 router.post("/sensordata", async (req, res, next) => {
   try {
-    console.log(req.body);
     await writeSensors(req.body);
     const doc = await getAllSensors();
     res.send(doc);

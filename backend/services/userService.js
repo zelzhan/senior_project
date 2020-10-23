@@ -12,12 +12,14 @@ const register = async (metadata) => {
     await doc.save((error, doc) => {
         if (error) {
             console.log(error);
+            return error
+            
         } else {
             console.log(doc);
+            return doc;
         }
     });
     
-    return 'OK'
 }
 
 const getUser = async(id) => {

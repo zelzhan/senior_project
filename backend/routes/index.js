@@ -1,5 +1,7 @@
+
 const axios = require("axios");
 const { register, getUser } = require("../services/userService");
+const { writeSensors, getAllSensors } = require('../services/sensorService')
 const { Router } = require("express");
 const router = Router();
 
@@ -12,7 +14,7 @@ router.post("/register", async (req, res, next) => {
     const doc = await register(req.body);
     res.send(doc);
   } catch (error) {
-    res.send(500);
+    res.send(error.stack);
   }
 });
 
@@ -33,9 +35,20 @@ router.get("/metadata", async (req, res, next) => {
     const doc = await getUser(req.query.id);
     res.send(doc);
   } catch (error) {
-    res.send(doc);
+    res.send(error)
   }
-});
+})
 
+
+router.post("/sensordata", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    await writeSensors(req.body);
+    const doc = await getAllSensors();
+    res.send(doc);
+  } catch (error) {
+    res.send(error)
+  }
+})
 
 module.exports = router;

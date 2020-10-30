@@ -1,5 +1,6 @@
 const { getUser } = require("../services/userService");
 const { writeSensors, getAllSensors } = require("../services/sensorService");
+const { sendSmS } = require("../services/smsService")
 const axios = require("axios");
 
 const socketService = async (socket) => {
@@ -10,6 +11,7 @@ const socketService = async (socket) => {
       const metadata = await getUser(message.id);
       const totaldata = Object.assign({}, metadata._doc, message);
       const result = await axios.post("http://localhost:5000", totaldata);
+      await sendSmS(`00${metadata.phone}`, +result.data);
       socket.send(String(result.data));
     } catch (error) {
       console.log(error.stack);

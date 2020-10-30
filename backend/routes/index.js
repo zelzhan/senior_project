@@ -1,7 +1,7 @@
-
 const axios = require("axios");
 const { register, getUser } = require("../services/userService");
-const { writeSensors, getAllSensors } = require('../services/sensorService')
+const { sendSmS } = require("../services/smsService");
+const { writeSensors, getAllSensors } = require("../services/sensorService");
 const { Router } = require("express");
 const router = Router();
 
@@ -22,7 +22,9 @@ router.post("/predict", async (req, res, next) => {
   try {
     const metadata = await getUser(req.body.id);
     const totaldata = Object.assign({}, metadata._doc, req.body);
+
     const result = await axios.post("http://localhost:5000", totaldata);
+    await sendSmS(`00${metadata.phone}`, +result.data);
     res.send(String(result.data));
   } catch (error) {
     console.error(error.stack);
@@ -33,12 +35,15 @@ router.post("/predict", async (req, res, next) => {
 router.get("/metadata", async (req, res, next) => {
   try {
     const doc = await getUser(req.query.id);
-    res.send(doc);
+    if (!doc || Object.entries(doc).length === 0) {
+      res.sendStatus(404);
+    } else {
+      res.send(doc);
+    }
   } catch (error) {
-    res.send(error)
+    res.send(error);
   }
-})
-
+});
 
 router.post("/sensordata", async (req, res, next) => {
   try {
@@ -46,8 +51,13 @@ router.post("/sensordata", async (req, res, next) => {
     const doc = await getAllSensors();
     res.send(doc);
   } catch (error) {
-    res.send(error)
+    res.send(error);
   }
-})
+});
+
+router.get("/test-sms", async (req, res, next) => {
+  await sendSmS(req.query.phone);
+  return 200;
+});
 
 module.exports = router;

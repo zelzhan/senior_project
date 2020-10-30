@@ -28,8 +28,6 @@ const InfluxDb = new Influx.InfluxDB({
     ]
 });
 
-
-
 module.exports = {
     InfluxDb
 };

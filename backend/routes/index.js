@@ -1,7 +1,11 @@
 const axios = require("axios");
 const { register, getUser } = require("../services/userService");
 const { sendSmS } = require("../services/smsService");
-const { writeSensors, getAllSensors } = require("../services/sensorService");
+const {
+  writeSensors,
+  getAllSensors,
+  getSensorsById,
+} = require("../services/sensorService");
 const { Router } = require("express");
 const router = Router();
 
@@ -51,6 +55,20 @@ router.post("/sensordata", async (req, res, next) => {
     const doc = await getAllSensors();
     res.send(doc);
   } catch (error) {
+    res.send(error);
+  }
+});
+
+router.get("/graph", async (req, res, next) => {
+  try {
+    const sensors = await getSensorsById(+req.query.id);
+    const graphData = [];
+    sensors.forEach(({ time, trestbps }) => {
+      graphData.push([+time, trestbps]);
+    });
+    res.send(graphData);
+  } catch (error) {
+    console.log(error.stack);
     res.send(error);
   }
 });

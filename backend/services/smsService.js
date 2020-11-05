@@ -28,7 +28,7 @@ const sendSmS = async (phone, status) => {
 
     const result = await myMessageApi.sendTextMessage(
       [phone],
-      "IMPORTANT!: Health Danger Alert!",
+      "IMPORTANT",
       message
     );
     console.log(result.body);

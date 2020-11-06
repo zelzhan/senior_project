@@ -61,7 +61,7 @@ router.post("/sensordata", async (req, res, next) => {
 
 router.get("/graph", async (req, res, next) => {
   try {
-    const sensors = await getSensorsById(+req.query.id);
+    const sensors = await getSensorsById(req.query.id);
     const graphData = [];
     sensors.forEach(({ time, trestbps }) => {
       graphData.push([+time, trestbps]);

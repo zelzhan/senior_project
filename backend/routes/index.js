@@ -78,4 +78,15 @@ router.get("/test-sms", async (req, res, next) => {
   return 200;
 });
 
+
+router.post("/test1", async (req, res, next) => {
+  console.log(req.body);
+  return 200;
+})
+
+router.post("/test2", async (req, res, next) => {
+  console.log(req.body);
+  return 200;
+})
+
 module.exports = router;

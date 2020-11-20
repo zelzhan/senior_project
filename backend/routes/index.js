@@ -62,9 +62,12 @@ router.post("/sensordata", async (req, res, next) => {
 router.get("/graph", async (req, res, next) => {
   try {
     const sensors = await getSensorsById(req.query.id);
+
+    const last = JSON.parse("[" + sensors[0].graph + "]");
+
     const graphData = [];
-    sensors.forEach(({ time, trestbps }) => {
-      graphData.push([+time, trestbps]);
+    last.forEach((value, i) => {
+      graphData.push([i, value]);
     });
     res.send(graphData);
   } catch (error) {
@@ -78,15 +81,14 @@ router.get("/test-sms", async (req, res, next) => {
   return 200;
 });
 
-
 router.post("/test1", async (req, res, next) => {
   console.log(req.body);
   return 200;
-})
+});
 
 router.post("/test2", async (req, res, next) => {
   console.log(req.body);
   return 200;
-})
+});
 
 module.exports = router;

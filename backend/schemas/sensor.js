@@ -1,5 +1,6 @@
 const Influx = require('influx');
 
+
 const InfluxDb = new Influx.InfluxDB({
     host: 'localhost',
     database: 'sensors',
@@ -19,7 +20,8 @@ const InfluxDb = new Influx.InfluxDB({
                 oldpeak: Influx.FieldType.INTEGER,
                 slope: Influx.FieldType.INTEGER,
                 ca: Influx.FieldType.INTEGER,
-                thal: Influx.FieldType.INTEGER
+                thal: Influx.FieldType.INTEGER,
+                graph: Influx.FieldType.STRING
             },
             tags: [
                 'hostname'

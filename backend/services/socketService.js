@@ -8,21 +8,18 @@ const socketService = async (socket) => {
     const message = JSON.parse(inp);
     const average = (array) => array.reduce((a, b) => a + b) / array.length;
 
-
-    message.graph = message.restecg;
+    message.graph = message.restecg.toString();
     message.restecg = message.restecg.map(Math.abs);
     message.restecg = average(message.restecg);
 
-
     await writeSensors(message);
-
 
     try {
       const metadata = await getUser(message.id);
       const totaldata = Object.assign({}, metadata._doc, message);
 
       console.log(totaldata.restecg);
-      
+
       const result = await axios.post("http://localhost:5000", totaldata);
       await sendSmS(`00${metadata.phone}`, +result.data);
       socket.send(String(result.data));

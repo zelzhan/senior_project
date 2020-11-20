@@ -18,6 +18,7 @@ const writeSensors = async (sensordata) => {
           slope: sensordata.slope,
           ca: sensordata.ca,
           thal: sensordata.thal,
+          graph: sensordata.graph
         },
       },
     ],

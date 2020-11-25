@@ -1,5 +1,10 @@
 const axios = require("axios");
-const { register, getUser } = require("../services/userService");
+const {
+  register,
+  getUser,
+  updateLocation,
+  findClosePeople,
+} = require("../services/userService");
 const { sendSmS } = require("../services/smsService");
 const {
   writeSensors,
@@ -28,6 +33,16 @@ router.post("/predict", async (req, res, next) => {
     const totaldata = Object.assign({}, metadata._doc, req.body);
 
     const result = await axios.post("http://localhost:5000", totaldata);
+
+    if (+result.data > 0) {
+      const people = await findClosePeople({
+        lon: metadata.location[0],
+        lat: metadata.location[1],
+      });
+      console.log("The following people would be notified");
+      console.log(people);
+    }
+
     await sendSmS(`00${metadata.phone}`, +result.data);
     res.send(String(result.data));
   } catch (error) {
@@ -74,6 +89,15 @@ router.get("/graph", async (req, res, next) => {
     console.log(error.stack);
     res.send(error);
   }
+});
+
+router.post("/geo", async (req, res, next) => {
+  res.send(await updateLocation(req.body));
+});
+
+router.post("/find", async (req, res, next) => {
+  console.log(req.body);
+  res.send(await findClosePeople(req.body));
 });
 
 router.get("/test-sms", async (req, res, next) => {

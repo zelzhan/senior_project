@@ -14,14 +14,11 @@ const indexRouter = require("./routes/index");
 
 app.use("/", indexRouter);
 
-
-app.all('/*', function(req, res, next) {
+app.all("/*", function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "X-Requested-With");
   next();
 });
-
-
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -59,7 +56,11 @@ mongoose.connection.on("open", (event) => {
 
 //Set up default mongoose connection
 const mongoDB = "mongodb://127.0.0.1/test";
-mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(mongoDB, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+});
 
 const server = app.listen(4000);
 const wss = new Server({ server: server, path: "/sensor-data" });

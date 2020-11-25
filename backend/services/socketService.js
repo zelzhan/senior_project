@@ -18,9 +18,17 @@ const socketService = async (socket) => {
       const metadata = await getUser(message.id);
       const totaldata = Object.assign({}, metadata._doc, message);
 
-      console.log(totaldata.restecg);
-
       const result = await axios.post("http://localhost:5000", totaldata);
+
+      if (+result.data > 0) {
+        const people = await findClosePeople({
+          lon: metadata.location[0],
+          lat: metadata.location[1],
+        });
+        console.log("The following people would be notified");
+        console.log(people);
+      }
+
       await sendSmS(`00${metadata.phone}`, +result.data);
       socket.send(String(result.data));
     } catch (error) {

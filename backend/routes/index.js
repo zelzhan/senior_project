@@ -49,6 +49,11 @@ router.get("/metadata", async (req, res, next) => {
 */
 router.post("/sensordata", async (req, res, next) => {
   try {
+    console.log(req.body);
+
+
+    //await writeSensors(req.body);
+    
     const data = await getUser(req.query._id);
     const gender = data.sex;
     

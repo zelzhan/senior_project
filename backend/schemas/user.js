@@ -16,8 +16,100 @@ const userSchema = new Schema({
         required: true
     },
     sex: {
-        type: Number,
+        type: String,
         required: true
+    },
+    sputum: {
+        type: Number,
+        default: 0
+    },
+    muscle_pain: {
+        type: Number,
+        default: 0
+    },
+    sore_throat: {
+        type: Number,
+        default: 0
+    },
+    pneumonia: {
+        type: Number,
+        default: 0
+    },
+    cold: {
+        type: Number,
+        default: 0
+    },
+    fever: {
+        type: Number,
+        default: 0
+    },
+    sneeze: {
+        type: Number,
+        default: 0
+    },
+    reflux: {
+        type: Number,
+        default: 0
+    },
+    diarrhea: {
+        type: Number,
+        default: 0
+    },
+    runny_nose: {
+        type: Number,
+        default: 0
+    },
+    difficult_breathing: {
+        type: Number,
+        default: 0
+    },
+    chest_pain: {
+        type: Number,
+        default: 0
+    },
+    cough: {
+        type: Number,
+        default: 0
+    },
+    joint_pain: {
+        type: Number,
+        default: 0
+    },
+    fatigue: {
+        type: Number,
+        default: 0
+    },
+    flu: {
+        type: Number,
+        default: 0
+    },
+    headache: {
+        type: Number,
+        default: 0
+    },
+    vomiting: {
+        type: Number,
+        default: 0
+    },
+    loss_appetite: {
+        type: Number,
+        default: 0
+    },
+    chills: {
+        type: Number,
+        default: 0
+    },
+    nausea: {
+        type: Number,
+        default: 0
+    },
+    physical_discomfort: {
+        type: Number,
+        default: 0
+    },
+    abdominal_pain: {
+        type: Number,
+        default: 0
     }
 });
 

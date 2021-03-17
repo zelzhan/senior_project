@@ -1,5 +1,8 @@
 const createError = require("http-errors");
 const express = require("express");
+let bodyParser = require('body-parser')
+
+
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
@@ -9,7 +12,8 @@ const { socketService } = require("./services/socketService");
 
 const app = express();
 const indexRouter = require("./routes/index");
-
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
 app.use("/", indexRouter);
 // view engine setup
 app.set("views", path.join(__dirname, "views"));

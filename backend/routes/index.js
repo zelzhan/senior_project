@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios')
 const router = express.Router();
 
-const { register, getUser, updateSensors } = require('../services/userService')
+const { register, getUser, updateSymptoms } = require('../services/userService')
 const { writeSensors, getAllSensors } = require('../services/sensorService')
 
 /* GET home page. */
@@ -11,13 +11,20 @@ router.get('/', function (req, res, next) {
 });
 
 router.post("/register", async (req, res, next) => {
-
   try {
+    
     const doc = await register(req.body)
-    res.send(doc)
+    console.log("doc")
+    console.log(doc)
+    res.send(String(doc))
+
   } catch (error) {
-    res.send(error.stack);
+    console.log("error")
+    console.log(error)
+    res.send(error)
+
   }
+
 });
 
 router.post("/predict", async (req, res, next) => {
@@ -42,50 +49,87 @@ router.get("/metadata", async (req, res, next) => {
 })
 
 /* {
-  id: 0,
-  sensor_value: 0,
-  sensor_type: "string"
+  _id: 0,
+  sensor_value: 0
 }
 */
-router.post("/sensordata", async (req, res, next) => {
+router.post("/spirometer", async (req, res, next) => {
   try {
     console.log(req.body);
 
 
-    //await writeSensors(req.body);
-    
     const data = await getUser(req.query._id);
     const gender = data.sex;
-    
+
     let doc;
-    if (req.body.sensor_type == "spirometer" ){
+    if (req.body.sensor_type == "spirometer") {
       //if fev1
-      if (   gender == "male" && req.body.sensor_value < 3.5 ) {
-        doc = await updateSensors(req.body.id,{"pneumonia":1, "difficult_breathing":1});
+      if (gender == "male" && req.body.sensor_value < 3.5) {
+        doc = await updateSymptoms(req.body._id, { "pneumonia": 1, "difficult_breathing": 1 });
       }
-      else if (   gender == "female" && req.body.sensor_value < 2.5 ) {
-        doc = await updateSensors(req.body.id,{"pneumonia":1, "difficult_breathing":1});
+      else if (gender == "female" && req.body.sensor_value < 2.5) {
+        doc = await updateSymptoms(req.body._id, { "pneumonia": 1, "difficult_breathing": 1 });
       }
     }
 
-    else if (req.body.sensor_type == "thermometer" ){
-      if (req.body.sensor_value > 36.6) {
-        doc = await updateSensors(req.body._id,{"fever":1});
 
-      }
-    }
-    else if (req.body.sensor_type == "pulseoximeter" ){
-      if (req.body.sensor_value < 60) {
-        doc = await updateSensors(req.body.id,{"fatigue":1});
-      }
-    }
-  
+    //CHEST PAIN ML
+    //HEADACKE TRESHOLD HIGH BLOOD PRESSURE
     res.send(doc);
 
   } catch (error) {
     res.send(error)
   }
 })
+
+//NEED TO BE TESTED
+router.post("/pulseoximeter", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    //SEND TO ML SERVICE
+    const result = await axios.post('http://localhost:5000', req.body.sensor_value);
+    if (result == 1) {
+      let doc = await updateSymptoms(req.body.id, { "fatigue": 1 });
+      res.send(doc);
+    } else {
+      console.log("Fatigue not predicted")
+    }
+
+  } catch (error) {
+    res.send(error)
+  }
+})
+
+//NEED TO BE TESTED
+router.post("/thermometer", async (req, res, next) => {
+  try {
+    console.log(req.body);
+    //SEND TO ML SERVICE
+    const result = await axios.post('http://localhost:5000', req.body.sensor_value);
+    if (result == 1) {
+      let doc = await updateSymptoms(req.body.id, { "fever": 1 });
+      res.send(doc);
+    } else {
+      console.log("Fever not predicted")
+    }
+
+  } catch (error) {
+    res.send(error)
+  }
+})
+
+//NEED TO BE TESTED
+// HERE SHOULD BE CHEST PAIN
+
+//ENDPOINT FOR QUESTIONNAIRE
+/*
+{
+  id: int,
+  symptoms: {
+    
+  }
+}
+*/
 
 router.post("/")
 

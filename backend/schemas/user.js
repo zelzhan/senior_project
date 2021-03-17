@@ -1,21 +1,26 @@
 const mongoose = require('mongoose');
-
 const { Schema } = mongoose;
+const bcrypt=require('bcrypt');
 
 const userSchema = new Schema({
-    _id: {
-        type: String,
-        required: true
-    },
     name: {
         type: String,
         required: true
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    password:{
+        type:String,
+        required:true
     },
     age: {
         type: Number,
         required: true
     },
-    sex: {
+    gender: {
         type: String,
         required: true
     },
@@ -112,6 +117,14 @@ const userSchema = new Schema({
         default: 0
     }
 });
+
+userSchema.methods.comparePasswords=function(password, cb){
+    bcrypt.compare(password,this.password,function(err,isMatch){
+        if(err) return cb(next);
+        cb(null,isMatch);
+    });
+}
+
 
 const db = mongoose.connection;
 const User = db.model('User', userSchema);

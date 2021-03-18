@@ -85,19 +85,19 @@ router.post("/spirometer", async (req, res, next) => {
 });
 
 //NEED TO BE TESTED
-router.get("/spo", async (req, res, next) => {
+router.get("/pulseoximeter", async (req, res, next) => {
   try {
     console.log(req.query);
     //SEND TO ML SERVICE
     const result = await axios.post("http://localhost:5000", req.query.s);
     if (result == 1) {
       let doc = await updateSymptoms(req.query.i, { fatigue: 1 });
-      res.send(doc);
+      res.json(doc);
     } else {
       console.log("Fatigue not predicted");
     }
   } catch (error) {
-    res.send(error);
+    res.status(400).json({ error: error.message });
   }
 });
 

@@ -34,14 +34,10 @@ const getUser = async (id) => {
 };
 
 const updateSymptoms = async (id, sensors_data) => {
-  try {
-    const doc = await User.findOneAndUpdate({ _id: id }, sensors_data);
-    doc.save();
-    console.log(doc);
-    return doc;
-  } catch (error) {
-    return error;
-  }
+  const doc = await User.findOneAndUpdate({ _id: id }, sensors_data);
+  const updated = await doc.save();
+  console.log(updated);
+  return updated;
 };
 
 module.exports.register = register;

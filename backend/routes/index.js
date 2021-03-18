@@ -1,8 +1,10 @@
 const express = require('express');
 const axios = require('axios')
 const router = express.Router();
+const bcrypt = require('bcrypt');
+const { User } = require('../schemas/user')
 
-const { register, getUser, updateSymptoms } = require('../services/userService')
+const { getUser, updateSymptoms } = require('../services/userService')
 const { writeSensors, getAllSensors } = require('../services/sensorService')
 
 /* GET home page. */
@@ -11,21 +13,57 @@ router.get('/', function (req, res, next) {
 });
 
 router.post("/register", async (req, res, next) => {
-  try {
-    
-    const doc = await register(req.body)
-    console.log("doc")
-    console.log(doc)
-    res.send(String(doc))
 
-  } catch (error) {
-    console.log("error")
-    console.log(error)
-    res.send(error)
 
-  }
+  let doc;
+  return User.findOne({ "email": req.body.email }, async (err, user) => {
+      
+      if (user) {
+        res.status(409).send({
+          message: 'This email already exists'
+        })
+      } else {
+          doc = new User({
+              password: bcrypt.hashSync(req.body.password, 8),
+              email: req.body.email,
+              name: req.body.name,
+              age: req.body.age,
+              gender: req.body.gender
+          })
+          await doc.save();
 
+          return res.status(200).json(doc).send()
+      }
+  })
 });
+
+router.post("/login", async (req, res, next) => {
+  return User.findOne({ "email": req.body.email }, async (err, user) => {
+    
+    if (!user) {
+      return res.status(404).send({ message: "User Not found." });
+    } else {
+      var passwordIsValid = bcrypt.compareSync(
+        req.body.password,
+        user.password
+      );
+      if (!passwordIsValid) {
+        return res.status(401).send({
+          accessToken: null,
+          message: "Invalid Password!"
+        });
+      } else {
+        return res.status(200).send({
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          gender: user.gender,
+          age: user.age
+        })
+      }
+    }
+  })
+})
 
 router.post("/predict", async (req, res, next) => {
   try {

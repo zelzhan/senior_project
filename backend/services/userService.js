@@ -24,19 +24,15 @@ const register = async (metadata) => {
 };
 
 const getUser = async (id) => {
-  try {
-    const doc = await User.findById(id);
-    console.log(doc);
-    return doc;
-  } catch (error) {
-    return error;
-  }
+  const doc = await User.findById(id);
+  console.log(doc);
+  return doc;
 };
 
 const updateSymptoms = async (id, sensors_data) => {
   const doc = await User.findOneAndUpdate({ _id: id }, sensors_data);
   const updated = await doc.save();
-  console.log(updated);
+  console.log({ updated });
   return updated;
 };
 

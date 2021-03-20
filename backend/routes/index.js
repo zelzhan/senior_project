@@ -84,6 +84,44 @@ router.post("/spirometer", async (req, res, next) => {
   }
 });
 
+/* {
+  Nurba's version
+  i: id,
+  s: sensor_value
+}
+*/
+router.get("/spirometer", async (req, res, next) => {
+  try {
+    const { i: id, s } = req.query;
+    const sensor_value = s / 100;
+    console.log({ id, sensor_value });
+
+    const user = await getUser(id);
+    const gender = user.gender;
+
+    let doc = user;
+    //if fev1
+    if (gender == "male" && sensor_value < 3.5) {
+      doc = await updateSymptoms(id, {
+        pneumonia: 1,
+        difficult_breathing: 1,
+      });
+    } else if (gender == "female" && sensor_value < 2.5) {
+      console.log("detected");
+      doc = await updateSymptoms(id, {
+        pneumonia: 1,
+        difficult_breathing: 1,
+      });
+    }
+
+    //CHEST PAIN ML
+    //HEADACKE TRESHOLD HIGH BLOOD PRESSURE
+    res.json(doc);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 //NEED TO BE TESTED
 router.get("/pulseoximeter", async (req, res, next) => {
   try {

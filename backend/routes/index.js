@@ -86,41 +86,6 @@ router.get("/metadata", async (req, res, next) => {
   }
 });
 
-/* {
-  _id: 0,
-  sensor_value: 0
-}
-*/
-router.post("/spirometer", async (req, res, next) => {
-  try {
-    console.log(req.body);
-
-    const data = await getUser(req.query._id);
-    const gender = data.sex;
-
-    let doc;
-    if (req.body.sensor_type == "spirometer") {
-      //if fev1
-      if (gender == "male" && req.body.sensor_value < 3.5) {
-        doc = await updateSymptoms(req.body._id, {
-          pneumonia: 1,
-          difficult_breathing: 1,
-        });
-      } else if (gender == "female" && req.body.sensor_value < 2.5) {
-        doc = await updateSymptoms(req.body._id, {
-          pneumonia: 1,
-          difficult_breathing: 1,
-        });
-      }
-    }
-
-    //CHEST PAIN ML
-    //HEADACKE TRESHOLD HIGH BLOOD PRESSURE
-    res.send(doc);
-  } catch (error) {
-    res.send(error);
-  }
-});
 
 /* {
   Nurba's version
@@ -130,7 +95,8 @@ router.post("/spirometer", async (req, res, next) => {
 */
 router.get("/spirometer", async (req, res, next) => {
   try {
-    const { i: id, s } = req.query;
+
+    const { i: id, s } = req.body;
     const sensor_value = s / 100;
     console.log({ id, sensor_value });
 
@@ -163,11 +129,11 @@ router.get("/spirometer", async (req, res, next) => {
 //NEED TO BE TESTED
 router.get("/pulseoximeter", async (req, res, next) => {
   try {
-    console.log(req.query);
+    console.log(req.body);
     //SEND TO ML SERVICE
-    const result = await axios.post("http://localhost:5000", req.query.s);
+    const result = await axios.post("http://localhost:5000", req.body.s);
     if (result == 1) {
-      let doc = await updateSymptoms(req.query.i, { fatigue: 1 });
+      let doc = await updateSymptoms(req.body.i, { fatigue: 1 });
       res.json(doc);
     } else {
       console.log("Fatigue not predicted");
@@ -178,16 +144,18 @@ router.get("/pulseoximeter", async (req, res, next) => {
 });
 
 //NEED TO BE TESTED
-router.post("/thermometer", async (req, res, next) => {
+router.get("/thermometer", async (req, res, next) => {
   try {
     console.log(req.body);
+    const { i: id, s } = req.body;
+    const sensor_value = s / 100;
     //SEND TO ML SERVICE
     const result = await axios.post(
       "http://localhost:5000",
-      req.body.sensor_value
+      sensor_value
     );
     if (result == 1) {
-      let doc = await updateSymptoms(req.body.id, { fever: 1 });
+      let doc = await updateSymptoms(id, { fever: 1 });
       res.send(doc);
     } else {
       console.log("Fever not predicted");

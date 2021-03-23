@@ -1,7 +1,6 @@
 const createError = require("http-errors");
 const express = require("express");
-let bodyParser = require('body-parser')
-
+let bodyParser = require("body-parser");
 
 const path = require("path");
 const cookieParser = require("cookie-parser");
@@ -12,8 +11,8 @@ const { socketService } = require("./services/socketService");
 
 const app = express();
 const indexRouter = require("./routes/index");
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use("/", indexRouter);
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -53,9 +52,13 @@ mongoose.connection.on("open", (event) => {
 
 //Set up default mongoose connection
 const mongoDB = "mongodb://127.0.0.1/test";
+// const mongoDB =
+//   "mongodb+srv://root:asdfasdf@predictions.42qgq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
 
-const server = app.listen(4000);
+const server = app.listen(4000, () =>
+  console.log(`Server is running on port ${4000}`)
+);
 const wss = new Server({ server: server, path: "/sensor-data" });
 
 wss.on("connection", (socket) => {

@@ -1,10 +1,10 @@
 const { User } = require("../schemas/user");
-const mongoose = require("mongoose");
+const ObjectId = require("mongodb").ObjectId;
 
 
 const getUser = async (id) => {
-  const doc = await User.findById(id);
-  console.log(doc);
+  const doc = await User.findById(ObjectId(id));
+  
   return doc;
 };
 

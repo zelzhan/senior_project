@@ -17,29 +17,29 @@ router.post("/register", async (req, res, next) => {
 
   let doc;
   return User.findOne({ "email": req.body.email }, async (err, user) => {
-      
-      if (user) {
-        res.status(409).send({
-          message: 'This email already exists'
-        })
-      } else {
-          doc = new User({
-              password: bcrypt.hashSync(req.body.password, 8),
-              email: req.body.email,
-              name: req.body.name,
-              age: req.body.age,
-              gender: req.body.gender
-          })
-          await doc.save();
 
-          return res.status(200).json(doc).send()
-      }
+    if (user) {
+      res.status(409).send({
+        message: 'This email already exists'
+      })
+    } else {
+      doc = new User({
+        password: bcrypt.hashSync(req.body.password, 8),
+        email: req.body.email,
+        name: req.body.name,
+        age: req.body.age,
+        gender: req.body.gender
+      })
+      await doc.save();
+
+      return res.status(200).json(doc).send()
+    }
   })
 });
 
 router.post("/login", async (req, res, next) => {
   return User.findOne({ "email": req.body.email }, async (err, user) => {
-    
+
     if (!user) {
       return res.status(404).send({ message: "User Not found." });
     } else {
@@ -96,13 +96,13 @@ router.get("/metadata", async (req, res, next) => {
 router.get("/spirometer", async (req, res, next) => {
   try {
 
-    const { i: id, s } = req.body;
+    const { i: id, s } = req.query;
     const sensor_value = s / 100;
     console.log({ id, sensor_value });
 
     const user = await getUser(id);
     const gender = user.gender;
-
+    console.log(user)
     let doc = user;
     //if fev1
     if (gender == "male" && sensor_value < 3.5) {
@@ -120,7 +120,7 @@ router.get("/spirometer", async (req, res, next) => {
 
     //CHEST PAIN ML
     //HEADACKE TRESHOLD HIGH BLOOD PRESSURE
-    res.json(doc);
+    res.status(200).json(doc);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -129,15 +129,16 @@ router.get("/spirometer", async (req, res, next) => {
 //NEED TO BE TESTED
 router.get("/pulseoximeter", async (req, res, next) => {
   try {
-    console.log(req.body);
+    console.log(req.query);
     //SEND TO ML SERVICE
-    const result = await axios.post("http://localhost:5000", req.body.s);
+    const result = await axios.post("http://localhost:5000", req.query.s);
     if (result == 1) {
-      let doc = await updateSymptoms(req.body.i, { fatigue: 1 });
+      let doc = await updateSymptoms(req.query.i, { fatigue: 1 });
       res.json(doc);
     } else {
       console.log("Fatigue not predicted");
     }
+    res.status(200);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -146,8 +147,8 @@ router.get("/pulseoximeter", async (req, res, next) => {
 //NEED TO BE TESTED
 router.get("/thermometer", async (req, res, next) => {
   try {
-    console.log(req.body);
-    const { i: id, s } = req.body;
+    console.log(req.query);
+    const { i: id, s } = req.query;
     const sensor_value = s / 100;
     //SEND TO ML SERVICE
     const result = await axios.post(
@@ -156,12 +157,12 @@ router.get("/thermometer", async (req, res, next) => {
     );
     if (result == 1) {
       let doc = await updateSymptoms(id, { fever: 1 });
-      res.send(doc);
+      res.status(200).send(doc);
     } else {
       console.log("Fever not predicted");
     }
   } catch (error) {
-    res.send(error);
+    res.status(500).send(error);
   }
 });
 
@@ -177,6 +178,16 @@ router.get("/thermometer", async (req, res, next) => {
   }
 }
 */
+router.get("/symptoms", async (req, res, next) => {
+  try {
+    console.log(req.query.symptoms);
+    const doc = await updateSymptoms(id, req.query.symptoms);
+    res.status(200).send(doc);
+
+  }catch{
+    res.status(500).send()
+  }
+});
 
 router.post("/");
 

@@ -1,32 +1,21 @@
 const { User } = require("../schemas/user");
+const ObjectId = require("mongodb").ObjectId;
 
-const register = async (metadata) => {
-  const doc = new User({
-    _id: metadata.id,
-    name: metadata.name,
-    age: metadata.age,
-    sex: metadata.sex,
-  });
-
-  await doc.save((error, doc) => {
-    if (error) {
-      console.log(error);
-      return error;
-    } else {
-      console.log(doc);
-      return doc;
-    }
-  });
-};
 
 const getUser = async (id) => {
-  try {
-    const doc = await User.findById(id);
-    return doc;
-  } catch (error) {
-    return error;
-  }
+  const doc = await User.findById(ObjectId(id));
+  
+  return doc;
 };
+
+const updateSymptoms = async (id, sensors_data) => {
+  const doc = await User.findOneAndUpdate({ _id: id }, sensors_data);
+  const updated = await doc.save();
+  console.log({ updated });
+  return updated;
+};
+
+
 
 const updateLocation = async ({ id, lon, lat }) => {
   try {
@@ -55,3 +44,5 @@ module.exports.register = register;
 module.exports.getUser = getUser;
 module.exports.updateLocation = updateLocation;
 module.exports.findClosePeople = findClosePeople;
+module.exports.updateSymptoms = updateSymptoms;
+

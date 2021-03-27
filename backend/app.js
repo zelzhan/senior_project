@@ -1,5 +1,7 @@
 const createError = require("http-errors");
 const express = require("express");
+let bodyParser = require("body-parser");
+
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
@@ -11,7 +13,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 const indexRouter = require("./routes/index");
-
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use("/", indexRouter);
 
 app.all("/*", function (req, res, next) {
@@ -56,13 +59,16 @@ mongoose.connection.on("open", (event) => {
 
 //Set up default mongoose connection
 const mongoDB = "mongodb://127.0.0.1/test";
+
 mongoose.connect(mongoDB, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
 });
 
-const server = app.listen(4000);
+const server = app.listen(4000, () =>
+  console.log(`Server is running on port ${4000}`)
+);
 const wss = new Server({ server: server, path: "/sensor-data" });
 
 wss.on("connection", (socket) => {

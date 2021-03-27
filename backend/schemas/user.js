@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+
 const { Schema } = mongoose;
 const bcrypt=require('bcrypt');
 
@@ -116,6 +117,7 @@ const userSchema = new Schema({
         type: Number,
         default: 0
     }
+
 });
 
 userSchema.methods.comparePasswords=function(password, cb){
@@ -127,5 +129,6 @@ userSchema.methods.comparePasswords=function(password, cb){
 
 
 const db = mongoose.connection;
-const User = db.model('User', userSchema);
+userSchema.index({ location: "2dsphere" });
+const User = db.model("User", userSchema);
 module.exports.User = User;

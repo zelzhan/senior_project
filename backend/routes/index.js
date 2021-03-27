@@ -4,8 +4,21 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const { User } = require('../schemas/user')
 
-const { getUser, updateSymptoms } = require('../services/userService')
-const { writeSensors, getAllSensors } = require('../services/sensorService')
+const {
+  register,
+  getUser,
+  updateLocation,
+  findClosePeople,
+} = require("../services/userService");
+
+const { sendSmS } = require("../services/smsService");
+
+const {
+  writeSensors,
+  getAllSensors,
+  getSensorsById,
+} = require("../services/sensorService");
+
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
@@ -69,7 +82,19 @@ router.post("/predict", async (req, res, next) => {
   try {
     const metadata = await getUser(req.body.id);
     const totaldata = Object.assign({}, metadata._doc, req.body);
+
     const result = await axios.post("http://localhost:5000", totaldata);
+
+    if (+result.data > 0) {
+      const people = await findClosePeople({
+        lon: metadata.location[0],
+        lat: metadata.location[1],
+      });
+      console.log("The following people would be notified");
+      console.log(people);
+    }
+
+    await sendSmS(`00${metadata.phone}`, +result.data);
     res.send(String(result.data));
   } catch (error) {
     console.error(error.stack);
@@ -80,12 +105,15 @@ router.post("/predict", async (req, res, next) => {
 router.get("/metadata", async (req, res, next) => {
   try {
     const doc = await getUser(req.query.id);
-    res.send(doc);
+    if (!doc || Object.entries(doc).length === 0) {
+      res.sendStatus(404);
+    } else {
+      res.send(doc);
+    }
   } catch (error) {
     res.send(error);
   }
 });
-
 
 /* {
   Nurba's version
@@ -189,6 +217,47 @@ router.get("/symptoms", async (req, res, next) => {
   }
 });
 
-router.post("/");
+
+
+router.get("/graph", async (req, res, next) => {
+  try {
+    const sensors = await getSensorsById(req.query.id);
+
+    const last = JSON.parse("[" + sensors[0].graph + "]");
+
+    const graphData = [];
+    last.forEach((value, i) => {
+      graphData.push([i, value]);
+    });
+    res.send(graphData);
+  } catch (error) {
+    console.log(error.stack);
+    res.send(error);
+  }
+});
+
+router.post("/geo", async (req, res, next) => {
+  res.send(await updateLocation(req.body));
+});
+
+router.post("/find", async (req, res, next) => {
+  console.log(req.body);
+  res.send(await findClosePeople(req.body));
+});
+
+router.get("/test-sms", async (req, res, next) => {
+  await sendSmS(req.query.phone);
+  return 200;
+});
+
+router.post("/test1", async (req, res, next) => {
+  console.log(req.body);
+  return 200;
+});
+
+router.post("/test2", async (req, res, next) => {
+  console.log(req.body);
+  return 200;
+});
 
 module.exports = router;

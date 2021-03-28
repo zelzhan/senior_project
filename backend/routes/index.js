@@ -5,9 +5,9 @@ const bcrypt = require('bcrypt');
 const { User } = require('../schemas/user')
 
 const {
-  register,
   getUser,
   updateLocation,
+  updateSymptoms,
   findClosePeople,
 } = require("../services/userService");
 

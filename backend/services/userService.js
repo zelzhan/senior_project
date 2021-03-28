@@ -40,7 +40,6 @@ const findClosePeople = async ({ lon, lat }) => {
   }
 };
 
-module.exports.register = register;
 module.exports.getUser = getUser;
 module.exports.updateLocation = updateLocation;
 module.exports.findClosePeople = findClosePeople;

@@ -110,6 +110,27 @@ router.get("/metadata", async (req, res, next) => {
   }
 });
 
+router.get("/isPredictionReady", async (req, res, next) => {
+  try {
+    const doc = await getUser(req.query.id);
+    if (!doc || Object.entries(doc).length === 0) {
+      res.sendStatus(404);
+    } else {
+      console.log(doc);
+      if (doc.covid_infected == 0) {
+        // update prediction ML in the db schema
+        res.status(200).send({
+          message: "Prediction is not ready!",
+        });
+      } else{
+        res.status(200).json(doc).send()
+      }
+    }
+  } catch (error) {
+    res.send(error);
+  }
+});
+
 /* {
   Nurba's version
   i: id,
@@ -139,7 +160,6 @@ router.get("/spirometer", async (req, res, next) => {
         difficult_breathing: 1,
       });
     }
-
     //CHEST PAIN ML
     //HEADACKE TRESHOLD HIGH BLOOD PRESSURE
     res.status(200).json(doc);
@@ -151,7 +171,6 @@ router.get("/spirometer", async (req, res, next) => {
 //NEED TO BE TESTED
 router.get("/pulseoximeter", async (req, res, next) => {
   try {
-    console.log(req.query);
     //SEND TO ML SERVICE
     const result = await axios.post("http://localhost:5000", req.query.s);
     if (result == 1) {
@@ -176,7 +195,7 @@ router.get("/thermometer", async (req, res, next) => {
     const result = await axios.post("http://localhost:5000", sensor_value);
     if (result == 1) {
       let doc = await updateSymptoms(id, { fever: 1 });
-      res.status(200).send(doc);
+      res.status(200).json(doc).send();
     } else {
       console.log("Fever not predicted");
     }
@@ -210,16 +229,6 @@ router.post("/symptoms", async (req, res) => {
     console.log(filteredSymptoms);
 
     const doc = await updateSymptoms(id, filteredSymptoms);
-    res.status(200).send(doc);
-  } catch {
-    res.status(500).send();
-  }
-});
-
-router.get("/symptoms", async (req, res, next) => {
-  try {
-    console.log(req.query.symptoms);
-    const doc = await updateSymptoms(id, req.query.symptoms);
     res.status(200).send(doc);
   } catch {
     res.status(500).send();

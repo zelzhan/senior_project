@@ -117,7 +117,12 @@ const userSchema = new Schema({
     type: Number,
     default: 0,
   },
+  covid_infected: {
+    type: Number,
+    default: 0
+  }
 });
+// if 0 no info, if 1 true, if 2 false
 
 userSchema.methods.comparePasswords = function (password, cb) {
   bcrypt.compare(password, this.password, function (err, isMatch) {

@@ -1,8 +1,8 @@
 const express = require("express");
 const axios = require("axios");
 const router = express.Router();
-const bcrypt = require('bcrypt');
-const { User } = require('../schemas/user')
+const bcrypt = require("bcrypt");
+const { User } = require("../schemas/user");
 
 const {
   getUser,
@@ -19,40 +19,35 @@ const {
   getSensorsById,
 } = require("../services/sensorService");
 
-
 /* GET home page. */
 router.get("/", function (req, res, next) {
   res.render("index", { title: "Express" });
 });
 
 router.post("/register", async (req, res, next) => {
-
-
   let doc;
-  return User.findOne({ "email": req.body.email }, async (err, user) => {
-
+  return User.findOne({ email: req.body.email }, async (err, user) => {
     if (user) {
       res.status(409).send({
-        message: 'This email already exists'
-      })
+        message: "This email already exists",
+      });
     } else {
       doc = new User({
         password: bcrypt.hashSync(req.body.password, 8),
         email: req.body.email,
         name: req.body.name,
         age: req.body.age,
-        gender: req.body.gender
-      })
+        gender: req.body.gender,
+      });
       await doc.save();
 
-      return res.status(200).json(doc).send()
+      return res.status(200).json(doc).send();
     }
-  })
+  });
 });
 
 router.post("/login", async (req, res, next) => {
-  return User.findOne({ "email": req.body.email }, async (err, user) => {
-
+  return User.findOne({ email: req.body.email }, async (err, user) => {
     if (!user) {
       return res.status(404).send({ message: "User Not found." });
     } else {
@@ -63,20 +58,20 @@ router.post("/login", async (req, res, next) => {
       if (!passwordIsValid) {
         return res.status(401).send({
           accessToken: null,
-          message: "Invalid Password!"
+          message: "Invalid Password!",
         });
       } else {
         return res.status(200).send({
-          id: user._id,
+          _id: user._id,
           email: user.email,
           name: user.name,
           gender: user.gender,
-          age: user.age
-        })
+          age: user.age,
+        });
       }
     }
-  })
-})
+  });
+});
 
 router.post("/predict", async (req, res, next) => {
   try {
@@ -123,14 +118,13 @@ router.get("/metadata", async (req, res, next) => {
 */
 router.get("/spirometer", async (req, res, next) => {
   try {
-
     const { i: id, s } = req.query;
     const sensor_value = s / 100;
     console.log({ id, sensor_value });
 
     const user = await getUser(id);
     const gender = user.gender;
-    console.log(user)
+    console.log(user);
     let doc = user;
     //if fev1
     if (gender == "male" && sensor_value < 3.5) {
@@ -179,10 +173,7 @@ router.get("/thermometer", async (req, res, next) => {
     const { i: id, s } = req.query;
     const sensor_value = s / 100;
     //SEND TO ML SERVICE
-    const result = await axios.post(
-      "http://localhost:5000",
-      sensor_value
-    );
+    const result = await axios.post("http://localhost:5000", sensor_value);
     if (result == 1) {
       let doc = await updateSymptoms(id, { fever: 1 });
       res.status(200).send(doc);
@@ -206,18 +197,34 @@ router.get("/thermometer", async (req, res, next) => {
   }
 }
 */
+router.post("/symptoms", async (req, res) => {
+  try {
+    const { id, symptoms } = req.body;
+    const filteredSymptoms = Object.entries(symptoms).reduce((acc, cur) => {
+      if (cur[1] === 1) {
+        acc[cur[0]] = 1;
+      }
+      return acc;
+    }, {});
+
+    console.log(filteredSymptoms);
+
+    const doc = await updateSymptoms(id, filteredSymptoms);
+    res.status(200).send(doc);
+  } catch {
+    res.status(500).send();
+  }
+});
+
 router.get("/symptoms", async (req, res, next) => {
   try {
     console.log(req.query.symptoms);
     const doc = await updateSymptoms(id, req.query.symptoms);
     res.status(200).send(doc);
-
-  }catch{
-    res.status(500).send()
+  } catch {
+    res.status(500).send();
   }
 });
-
-
 
 router.get("/graph", async (req, res, next) => {
   try {
@@ -261,3 +268,30 @@ router.post("/test2", async (req, res, next) => {
 });
 
 module.exports = router;
+/*
+
+    var sputum: Int? = null,
+    var muscle_pain: Int? = null,
+    var sore_throat: Int? = null,
+    var pneumonia: Int? = null,
+    var cold: Int? = null,
+    var fever: Int? = null,
+    var sneeze: Int? = null,
+    var reflux: Int? = null,
+    var diarrhea: Int? = null,
+    var runny_nose: Int? = null,
+    var difficult_breathing: Int? = null,
+    var chest_pain: Int? = null,
+    var cough: Int? = null,
+    var joint_pain: Int? = null,
+    var fatigue: Int? = null,
+    var flu: Int? = null,
+    var headache: Int? = null,
+    var vomiting: Int? = null,
+    var loss_appetite: Int? = null,
+    var chills: Int? = null,
+    var nausea: Int? = null,
+    var physical_discomfort: Int? = null,
+    var abdominal_pain: Int? = null,
+
+*/

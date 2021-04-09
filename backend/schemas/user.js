@@ -24,6 +24,13 @@ const userSchema = new Schema({
   gender: {
     type: String,
     required: true,
+  }
+});
+// if 0 no info, if 1 true infected, if 2 false
+const symptomsSchema = new Schema({
+  _userID:{
+    type: Schema.Types.ObjectId,
+    required: true,
   },
   sputum: {
     type: Number,
@@ -122,7 +129,6 @@ const userSchema = new Schema({
     default: 0
   }
 });
-// if 0 no info, if 1 true, if 2 false
 
 userSchema.methods.comparePasswords = function (password, cb) {
   bcrypt.compare(password, this.password, function (err, isMatch) {
@@ -134,7 +140,9 @@ userSchema.methods.comparePasswords = function (password, cb) {
 const db = mongoose.connection;
 userSchema.index({ location: "2dsphere" });
 const User = db.model("User", userSchema);
+const Symptoms = db.model("Symptoms", symptomsSchema);
 module.exports.User = User;
+module.exports.Symptoms = Symptoms;
 
 /*
 

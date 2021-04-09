@@ -2,10 +2,11 @@ const express = require("express");
 const axios = require("axios");
 const router = express.Router();
 const bcrypt = require("bcrypt");
-const { User } = require("../schemas/user");
-
+const { User, Symptoms } = require("../schemas/user");
+const ObjectId = require("mongodb").ObjectId;
 const {
   getUser,
+  getSymptoms,
   updateLocation,
   updateSymptoms,
   findClosePeople,
@@ -39,7 +40,12 @@ router.post("/register", async (req, res, next) => {
         age: req.body.age,
         gender: req.body.gender,
       });
+      console.log(doc._id);
+      doc2 = new Symptoms({
+        _userID: doc._id,
+      });
       await doc.save();
+      await doc2.save();
 
       return res.status(200).json(doc).send();
     }
@@ -76,24 +82,32 @@ router.post("/login", async (req, res, next) => {
 router.post("/predict", async (req, res, next) => {
   try {
     const metadata = await getUser(req.body.id);
-    const totaldata = Object.assign({}, metadata._doc, req.body);
+    const symptoms = await getSymptoms(req.body.id);
 
-    const result = await axios.post("http://localhost:5000", totaldata);
+    const body = Object.assign({}, metadata, symptoms);
 
-    if (+result.data > 0) {
-      const people = await findClosePeople({
-        lon: metadata.location[0],
-        lat: metadata.location[1],
-      });
-      console.log("The following people would be notified");
-      console.log(people);
-    }
+    const result = await axios.post("http://localhost:5000/covid", body); //symptoms gender age
 
-    await sendSmS(`00${metadata.phone}`, +result.data);
+    // if (+result.data > 0) {
+    //   const people = await findClosePeople({
+    //     lon: metadata.location[0],
+    //     lat: metadata.location[1],
+    //   });
+    //   console.log("The following people would be notified");
+    //   console.log(people);
+    // }
+
+    // await sendSmS(`00${metadata.phone}`, +result.data);
     res.send(String(result.data));
+    const log = await Symptoms.deleteOne({ _userID: ObjectId(req.body.id) });
+    console.log(log);
+    doc2 = new Symptoms({
+      _userID: req.body.id,
+    });
+    await doc2.save();
   } catch (error) {
     console.error(error.stack);
-    res.send(500);
+    res.sendStatus(500);
   }
 });
 
@@ -112,19 +126,12 @@ router.get("/metadata", async (req, res, next) => {
 
 router.get("/isPredictionReady", async (req, res, next) => {
   try {
-    const doc = await getUser(req.query.id);
+    const doc = await getSymptoms(req.query.id);
     if (!doc || Object.entries(doc).length === 0) {
       res.sendStatus(404);
     } else {
       console.log(doc);
-      if (doc.covid_infected == 0) {
-        // update prediction ML in the db schema
-        res.status(200).send({
-          message: "Prediction is not ready!",
-        });
-      } else{
-        res.status(200).json(doc).send()
-      }
+      res.status(200).json(doc.covid_infected).send();
     }
   } catch (error) {
     res.send(error);
@@ -172,14 +179,12 @@ router.get("/spirometer", async (req, res, next) => {
 router.get("/pulseoximeter", async (req, res, next) => {
   try {
     //SEND TO ML SERVICE
-    const result = await axios.post("http://localhost:5000", req.query.s);
-    if (result == 1) {
-      let doc = await updateSymptoms(req.query.i, { fatigue: 1 });
-      res.json(doc);
-    } else {
-      console.log("Fatigue not predicted");
-    }
-    res.status(200);
+    const data = await getUser(req.query.id);
+    const result = await axios.get(
+      `http://localhost:5000/pulseoximeter?s=${req.query.s}&age=${data.gender}&gender=${data.age}`
+    );
+    let doc = await updateSymptoms(req.query.i, { fatigue: result });
+    res.status(200).json(doc);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -189,16 +194,15 @@ router.get("/pulseoximeter", async (req, res, next) => {
 router.get("/thermometer", async (req, res, next) => {
   try {
     console.log(req.query);
+
+    const data = await getUser(req.query.id);
     const { i: id, s } = req.query;
     const sensor_value = s / 100;
-    //SEND TO ML SERVICE
-    const result = await axios.post("http://localhost:5000", sensor_value);
-    if (result == 1) {
-      let doc = await updateSymptoms(id, { fever: 1 });
-      res.status(200).json(doc).send();
-    } else {
-      console.log("Fever not predicted");
-    }
+    const result = await axios.get(
+      `http://localhost:5000/thermometer?s=${req.query.s}&age=${data.gender}&gender=${data.age}`
+    );
+    let doc = await updateSymptoms(id, { fever: result });
+    res.status(200).json(doc).send();
   } catch (error) {
     res.status(500).send(error);
   }

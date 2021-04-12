@@ -317,16 +317,18 @@ router.get("/thermometer", async (req, res, next) => {
 router.post("/symptoms", async (req, res) => {
   try {
     const { id, symptoms } = req.body;
-    const filteredSymptoms = Object.entries(symptoms).reduce((acc, cur) => {
-      if (cur[1] === 1) {
-        acc[cur[0]] = 1;
-      }
-      return acc;
-    }, {});
+    // const filteredSymptoms = Object.entries(symptoms).reduce((acc, cur) => {
+    //   if (cur[1] === 1) {
+    //     acc[cur[0]] = 1;
+    //   }
+    //   return acc;
+    // }, {});
 
-    console.log(filteredSymptoms);
+    console.log(symptoms);
 
-    const doc = await updateSymptoms(id, filteredSymptoms);
+    const doc = await updateSymptoms(id, symptoms);
+    const d = await updateSymptoms(id, {"submitted":true});
+    await d.save()
     res.status(200).send(doc);
   } catch {
     res.status(500).send();

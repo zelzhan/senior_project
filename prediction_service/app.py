@@ -60,7 +60,7 @@ def pulseoximeter():
     if state:
         res = model.predict(input_data)
     
-    return res if res else fun2(age)
+    return res if res else str(fun2(age))
 
 
 @app.route('/thermometer', methods=['GET'])
@@ -85,7 +85,7 @@ def termometer():
     if state:
         res = model.predict(input_data)
     
-    return res if res else fun1(age)
+    return res if res else str(fun1(age))
 
 
 @app.route('/covid', methods=['POST'])
@@ -103,5 +103,5 @@ def covid():
     if state:
         res = model.predict(0)
     
-    return res if res else fun3(state)
+    return str(res) if res else str(fun3(state))
     

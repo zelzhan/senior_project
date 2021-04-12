@@ -24,13 +24,17 @@ const userSchema = new Schema({
   gender: {
     type: String,
     required: true,
-  }
+  },
 });
 // if 0 no info, if 1 true infected, if 2 false
 const symptomsSchema = new Schema({
-  _userID:{
+  _userID: {
     type: Schema.Types.ObjectId,
     required: true,
+  },
+  submitted: {
+    type: Boolean,
+    default: false,
   },
   sputum: {
     type: Number,
@@ -125,9 +129,62 @@ const symptomsSchema = new Schema({
     default: 0,
   },
   covid_infected: {
+    value: {
+      type: Number,
+      default: 0,
+    },
+    percents: {
+      type: Number,
+      default: 0,
+    },
+  },
+});
+
+const sensorsSchema = new Schema({
+  _userID: {
+    type: Schema.Types.ObjectId,
+    required: true,
+  },
+  spirometer: {
     type: Number,
-    default: 0
-  }
+    default: 0,
+  },
+  pneumonia: {
+    type: Number,
+    default: 0,
+  },
+  difficult_breathing: {
+    type: Number,
+    default: 0,
+  },
+  thermometer: {
+    type: Number,
+    default: 0,
+  },
+  fever: {
+    value: {
+      type: Number,
+      default: 0,
+    },
+    percents: {
+      type: Number,
+      default: 0,
+    },
+  },
+  pulseoximeter: {
+    type: Number,
+    default:0
+  },
+  fatigue: {
+    value: {
+      type: Number,
+      default: 0,
+    },
+    percents: {
+      type: Number,
+      default: 0,
+    },
+  },
 });
 
 userSchema.methods.comparePasswords = function (password, cb) {
@@ -141,8 +198,11 @@ const db = mongoose.connection;
 userSchema.index({ location: "2dsphere" });
 const User = db.model("User", userSchema);
 const Symptoms = db.model("Symptoms", symptomsSchema);
+const Sensors = db.model("Sensors", sensorsSchema);
+
 module.exports.User = User;
 module.exports.Symptoms = Symptoms;
+module.exports.Sensors = Sensors;
 
 /*
 

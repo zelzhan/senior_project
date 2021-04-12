@@ -2,13 +2,15 @@ const express = require("express");
 const axios = require("axios");
 const router = express.Router();
 const bcrypt = require("bcrypt");
-const { User, Symptoms } = require("../schemas/user");
+const { User, Symptoms, Sensors } = require("../schemas/user");
 const ObjectId = require("mongodb").ObjectId;
 const {
   getUser,
+  getSensors,
   getSymptoms,
   updateLocation,
   updateSymptoms,
+  updateSensors,
   findClosePeople,
 } = require("../services/userService");
 
@@ -44,9 +46,12 @@ router.post("/register", async (req, res, next) => {
       doc2 = new Symptoms({
         _userID: doc._id,
       });
+      doc3 = new Sensors({
+        _userID: doc._id,
+      });
       await doc.save();
       await doc2.save();
-
+      await doc3.save();
       return res.status(200).json(doc).send();
     }
   });
@@ -83,8 +88,8 @@ router.post("/predict", async (req, res, next) => {
   try {
     const metadata = await getUser(req.body.id);
     const symptoms = await getSymptoms(req.body.id);
-
-    const body = Object.assign({}, metadata, symptoms);
+    const sensors = await getSensors(req.body.id);
+    const body = Object.assign({}, metadata, symptoms, sensors);
 
     const result = await axios.post("http://localhost:5000/covid", body); //symptoms gender age
 
@@ -99,12 +104,6 @@ router.post("/predict", async (req, res, next) => {
 
     // await sendSmS(`00${metadata.phone}`, +result.data);
     res.send(String(result.data));
-    const log = await Symptoms.deleteOne({ _userID: ObjectId(req.body.id) });
-    console.log(log);
-    doc2 = new Symptoms({
-      _userID: req.body.id,
-    });
-    await doc2.save();
   } catch (error) {
     console.error(error.stack);
     res.sendStatus(500);
@@ -127,12 +126,73 @@ router.get("/metadata", async (req, res, next) => {
 router.get("/isPredictionReady", async (req, res, next) => {
   try {
     const doc = await getSymptoms(req.query.id);
+    console.log(doc);
     if (!doc || Object.entries(doc).length === 0) {
       res.sendStatus(404);
     } else {
       console.log(doc);
-      res.status(200).json(doc.covid_infected).send();
+      res.status(200).json({ covid_infected: doc.covid_infected }).send();
+      const l = await Symptoms.deleteOne({ _userID: ObjectId(req.body.id) });
+
+      const l2 = await Sensors.deleteOne({ _userID: ObjectId(req.body.id) });
+      console.log(l);
+      console.log(l2);
+      doc2 = new Symptoms({
+        _userID: req.body.id,
+      });
+      await doc2.save();
+
+      doc3 = new Sensors({
+        _userID: req.body.id,
+      });
+      await doc3.save();
     }
+  } catch (error) {
+    res.send(error);
+  }
+});
+
+router.get("/getHealthInfo", async (req, res, next) => {
+  try {
+    const symptoms = await getSymptoms(req.query.id);
+    const sensors = await getSensors(req.query.id);
+    let survey = null;
+    if (symptoms.submitted) {
+      survey = symptoms;
+    }
+    let thermometer = null;
+    if (sensors.thermometer != 0) {
+      thermometer = {
+        value: sensors.thermometer,
+        fever: sensors.fever,
+      };
+    }
+    let spirometer = null;
+    if (sensors.spirometer != 0) {
+      spirometer = {
+        value: sensors.spirometer,
+        difficult_breathing: sensors.difficult_breathing,
+        pneumonia: sensors.pneumonia,
+      };
+    }
+    let pulseoximeter = null;
+    if (sensors.pulseoximeter != 0) {
+      pulseoximeter = {
+        value: sensors.pulseoximeter,
+        difficult_breathing: sensors.fatigue,
+      };
+    }
+    let result = {
+      sensors: {
+        pulseoximeter,
+        spirometer,
+        thermometer,
+      },
+
+      survey,
+    };
+    console.log(result);
+    res.status(200).json(result).send();
   } catch (error) {
     res.send(error);
   }
@@ -179,11 +239,30 @@ router.get("/spirometer", async (req, res, next) => {
 router.get("/pulseoximeter", async (req, res, next) => {
   try {
     //SEND TO ML SERVICE
-    const data = await getUser(req.query.id);
+    console.log(req.query.i)
+    const data = await getUser(req.query.i);
+    console.log(data)
     const result = await axios.get(
-      `http://localhost:5000/pulseoximeter?s=${req.query.s}&age=${data.gender}&gender=${data.age}`
+      `http://localhost:5000/pulseoximeter?s=${req.query.s}&age=${data.age}&gender=${data.gender}`
     );
-    let doc = await updateSymptoms(req.query.i, { fatigue: result });
+    console.log(result);
+    let doc;
+    if (result.value == "2") {
+      doc = await updateSensors(req.query.i, {
+        fatigue: {
+          value: 1,
+          percents: 0,
+        },
+      });
+    } else {
+      doc = await updateSensors(req.query.i, {
+        fatigue: {
+          value: 1,
+          percents: Number(result.percents),
+        },
+      });
+    }
+
     res.status(200).json(doc);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -195,13 +274,28 @@ router.get("/thermometer", async (req, res, next) => {
   try {
     console.log(req.query);
 
-    const data = await getUser(req.query.id);
-    const { i: id, s } = req.query;
-    const sensor_value = s / 100;
+    const data = await getUser(req.query.i);
+    
+    const sensor_value = req.query.s / 100;
     const result = await axios.get(
-      `http://localhost:5000/thermometer?s=${req.query.s}&age=${data.gender}&gender=${data.age}`
+      `http://localhost:5000/thermometer?s=${req.query.s}&age=${data.age}&gender=${data.gender}`
     );
-    let doc = await updateSymptoms(id, { fever: result });
+    let doc;
+    if (result.value == "2") {
+      doc = await updateSensors(req.query.i, {
+        fever: {
+          value: 1,
+          percents: 0,
+        },
+      });
+    } else {
+      doc = await updateSensors(req.query.i, {
+        fever: {
+          value: 1,
+          percents: Number(result.percents),
+        },
+      });
+    }
     res.status(200).json(doc).send();
   } catch (error) {
     res.status(500).send(error);

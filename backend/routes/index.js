@@ -215,7 +215,7 @@ router.get("/spirometer", async (req, res, next) => {
     let doc = user;
     //if fev1
     if ((gender == "male" && sensor_value < 3.5)||(gender == "female" && sensor_value < 2.5)) {
-      doc = await updateSymptoms(id, {
+      doc = await updateSensors(id, {
         pneumonia: 1,
         difficult_breathing: 1,
         spirometer: sensor_value
@@ -269,7 +269,6 @@ router.get("/thermometer", async (req, res, next) => {
       `http://localhost:5000/thermometer?s=${req.query.s}&age=${data.age}&gender=${data.gender}`
     );
     let percents = 0;
-    
     if (result.data.value != "2") {
       percents = Number(result.data.percents)
     } 

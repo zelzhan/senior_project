@@ -2,6 +2,7 @@ from flask import Flask, request
 import os
 import pickle
 import json
+from flask import jsonify
 import random
 from csv import reader
 
@@ -60,7 +61,10 @@ def pulseoximeter():
     if state:
         res = model.predict(input_data)
     
-    return res if res else str(fun2(age))
+    return str(res) if res else jsonify(
+        value = str(fun1(age)),
+        percents = random.uniform(70.0, 80.0)
+    )
 
 
 @app.route('/thermometer', methods=['GET'])
@@ -85,7 +89,10 @@ def termometer():
     if state:
         res = model.predict(input_data)
     
-    return res if res else str(fun1(age))
+    return str(res) if res else jsonify(
+        value = str(fun2(age)),
+        percents = random.uniform(82.0, 92.0)
+    )
 
 
 @app.route('/covid', methods=['POST'])
@@ -103,5 +110,8 @@ def covid():
     if state:
         res = model.predict(0)
     
-    return str(res) if res else str(fun3(state))
-    
+
+    return str(res) if res else jsonify(
+        value = str(fun3(state)),
+        percents = random.uniform(73.0, 83.0)
+    )

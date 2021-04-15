@@ -212,21 +212,16 @@ router.get("/spirometer", async (req, res, next) => {
 
     const user = await getUser(id);
     const gender = user.gender;
-    console.log(user);
+    await updateSensors(id, {"spirometer":sensor_value});
     let doc = user;
     //if fev1
-    if (gender == "male" && sensor_value < 3.5) {
+    if ((gender == "male" && sensor_value < 3.5)||(gender == "female" && sensor_value < 2.5)) {
       doc = await updateSymptoms(id, {
         pneumonia: 1,
         difficult_breathing: 1,
+        spirometer: sensor_value
       });
-    } else if (gender == "female" && sensor_value < 2.5) {
-      console.log("detected");
-      doc = await updateSymptoms(id, {
-        pneumonia: 1,
-        difficult_breathing: 1,
-      });
-    }
+    } 
     //CHEST PAIN ML
     //HEADACKE TRESHOLD HIGH BLOOD PRESSURE
     res.status(200).json(doc);
@@ -241,27 +236,24 @@ router.get("/pulseoximeter", async (req, res, next) => {
     //SEND TO ML SERVICE
     console.log(req.query.i)
     const data = await getUser(req.query.i);
-    console.log(data)
+    
+    await updateSensors(id, {}); 
     const result = await axios.get(
       `http://localhost:5000/pulseoximeter?s=${req.query.s}&age=${data.age}&gender=${data.gender}`
     );
     console.log(result);
-    let doc;
-    if (result.value == "2") {
-      doc = await updateSensors(req.query.i, {
-        fatigue: {
-          value: 1,
-          percents: 0,
-        },
-      });
-    } else {
-      doc = await updateSensors(req.query.i, {
-        fatigue: {
-          value: 1,
-          percents: Number(result.percents),
-        },
-      });
-    }
+    let percents = 0;
+    
+    if (result.value != "2") {
+      percents = Number(result.percents)
+    } 
+    const doc = await updateSensors(req.query.i, {
+      fatigue: {
+        value: 1,
+        percents: percents,
+      },
+      pulseoximeter:req.query.s
+    });
 
     res.status(200).json(doc);
   } catch (error) {
@@ -280,22 +272,18 @@ router.get("/thermometer", async (req, res, next) => {
     const result = await axios.get(
       `http://localhost:5000/thermometer?s=${req.query.s}&age=${data.age}&gender=${data.gender}`
     );
-    let doc;
-    if (result.value == "2") {
-      doc = await updateSensors(req.query.i, {
-        fever: {
-          value: 1,
-          percents: 0,
-        },
-      });
-    } else {
-      doc = await updateSensors(req.query.i, {
-        fever: {
-          value: 1,
-          percents: Number(result.percents),
-        },
-      });
-    }
+    let percents = 0;
+    
+    if (result.value != "2") {
+      percents = Number(result.percents)
+    } 
+    const doc = await updateSensors(req.query.i, {
+      fever: {
+        value: 1,
+        percents: percents,
+      },
+      thermometer: sensor_value
+    });
     res.status(200).json(doc).send();
   } catch (error) {
     res.status(500).send(error);

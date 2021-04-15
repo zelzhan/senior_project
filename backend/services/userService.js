@@ -23,12 +23,8 @@ const updateSymptoms = async (id, sensors_data) => {
 };
 
 const updateSensors = async (id, sensors_data) => {
-  const doc = await Sensors.findByIdAndUpdate(ObjectId(id), sensors_data, {
-    new: true,
-  });
-  const updated = await doc.save();
-  console.log(updated);
-  return updated;
+  const doc = await Sensors.updateOne({ _userID: ObjectId(id) }, sensors_data);
+  return doc;
 };
 
 const updateLocation = async ({ id, lon, lat }) => {

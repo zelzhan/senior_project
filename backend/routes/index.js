@@ -317,7 +317,6 @@ router.post("/symptoms", async (req, res) => {
     const { id, symptoms } = req.body;
     console.log(symptoms);
     const doc = await updateSymptoms(id, { ...symptoms, submitted: true });
-    await doc.save();
     res.status(200).send(doc);
   } catch {
     res.status(500).send();

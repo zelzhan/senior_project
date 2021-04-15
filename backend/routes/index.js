@@ -212,7 +212,6 @@ router.get("/spirometer", async (req, res, next) => {
 
     const user = await getUser(id);
     const gender = user.gender;
-    await updateSensors(id, {"spirometer":sensor_value});
     let doc = user;
     //if fev1
     if ((gender == "male" && sensor_value < 3.5)||(gender == "female" && sensor_value < 2.5)) {
@@ -236,16 +235,13 @@ router.get("/pulseoximeter", async (req, res, next) => {
     //SEND TO ML SERVICE
     console.log(req.query.i)
     const data = await getUser(req.query.i);
-    
-    await updateSensors(id, {}); 
     const result = await axios.get(
       `http://localhost:5000/pulseoximeter?s=${req.query.s}&age=${data.age}&gender=${data.gender}`
     );
-    console.log(result);
     let percents = 0;
     
-    if (result.value != "2") {
-      percents = Number(result.percents)
+    if (result.data.value != "2") {
+      percents = Number(result.data.percents)
     } 
     const doc = await updateSensors(req.query.i, {
       fatigue: {
@@ -274,8 +270,8 @@ router.get("/thermometer", async (req, res, next) => {
     );
     let percents = 0;
     
-    if (result.value != "2") {
-      percents = Number(result.percents)
+    if (result.data.value != "2") {
+      percents = Number(result.data.percents)
     } 
     const doc = await updateSensors(req.query.i, {
       fever: {

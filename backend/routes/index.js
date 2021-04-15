@@ -52,7 +52,7 @@ router.post("/register", async (req, res, next) => {
       await doc.save();
       await doc2.save();
       await doc3.save();
-      return res.status(200).json(doc).send();
+      return res.status(200).json(doc);
     }
   });
 });
@@ -60,19 +60,19 @@ router.post("/register", async (req, res, next) => {
 router.post("/login", async (req, res, next) => {
   return User.findOne({ email: req.body.email }, async (err, user) => {
     if (!user) {
-      return res.status(404).send({ message: "User Not found." });
+      return res.status(404).json({ message: "User Not found." });
     } else {
       var passwordIsValid = bcrypt.compareSync(
         req.body.password,
         user.password
       );
       if (!passwordIsValid) {
-        return res.status(401).send({
+        return res.status(401).json({
           accessToken: null,
           message: "Invalid Password!",
         });
       } else {
-        return res.status(200).send({
+        return res.status(200).json({
           _id: user._id,
           email: user.email,
           name: user.name,
@@ -128,10 +128,8 @@ router.get("/isPredictionReady", async (req, res, next) => {
     const doc = await getSymptoms(req.query.id);
     console.log(doc);
     if (!doc || Object.entries(doc).length === 0) {
-      res.sendStatus(404);
+      return res.sendStatus(404);
     } else {
-      console.log(doc);
-      res.status(200).json({ covid_infected: doc.covid_infected }).send();
       const l = await Symptoms.deleteOne({ _userID: ObjectId(req.body.id) });
 
       const l2 = await Sensors.deleteOne({ _userID: ObjectId(req.body.id) });
@@ -146,6 +144,14 @@ router.get("/isPredictionReady", async (req, res, next) => {
         _userID: req.body.id,
       });
       await doc3.save();
+
+      // ты, кажется, не можешь отправить ответ клиенту и потом что то делать
+      // вроде ответ клиенту должен быть самым последним
+      // когда это стояло наверху, метод сначала отправлял 200 ОК,
+      // но потом выходит Exception (чекни где именно)
+      // и затем снова в catch block отправляется ответ клиенту 400
+      // и за это он ругался
+      res.status(200).json({ covid_infected: doc.covid_infected });
     }
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -192,7 +198,7 @@ router.get("/getHealthInfo", async (req, res, next) => {
       survey,
     };
     console.log(result);
-    res.status(200).json(result).send();
+    res.status(200).json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -288,7 +294,7 @@ router.get("/thermometer", async (req, res, next) => {
       },
       thermometer: sensor_value,
     });
-    res.status(200).json(doc).send();
+    res.status(200).json(doc);
   } catch (error) {
     res.status(500).send(error);
   }

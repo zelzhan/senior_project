@@ -58,7 +58,9 @@ mongoose.connection.on("open", (event) => {
 });
 
 //Set up default mongoose connection
-const mongoDB = "mongodb://127.0.0.1/test";
+// const mongoDB = "mongodb://127.0.0.1/test";
+const mongoDB =
+  "mongodb+srv://root:asdfasdf@predictions.42qgq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 
 mongoose.connect(mongoDB, {
   useNewUrlParser: true,

@@ -8,29 +8,24 @@ const getUser = async (id) => {
 };
 
 const getSymptoms = async (id) => {
-  const doc = await Symptoms.findOne({_userID : ObjectId(id)});
+  const doc = await Symptoms.findOne({ _userID: ObjectId(id) });
 
   return doc;
 };
 const getSensors = async (id) => {
-  const doc = await Sensors.findOne({_userID : ObjectId(id)});
+  const doc = await Sensors.findOne({ _userID: ObjectId(id) });
   return doc;
 };
 
 const updateSymptoms = async (id, sensors_data) => {
-  const doc = await Symptoms.findOneAndUpdate({ _userID: ObjectId(id) }, sensors_data);
-  const updated = await doc.save();
-  console.log({ updated });
-  return updated;
+  const doc = await Symptoms.updateOne({ _userID: ObjectId(id) }, sensors_data);
+  return doc;
 };
 
 const updateSensors = async (id, sensors_data) => {
-  const doc = await Sensors.findOneAndUpdate({ _userID: ObjectId(id) }, sensors_data);
-  const updated = await doc.save();
-  console.log( updated );
-  return updated;
+  const doc = await Sensors.updateOne({ _userID: ObjectId(id) }, sensors_data);
+  return doc;
 };
- 
 
 const updateLocation = async ({ id, lon, lat }) => {
   try {

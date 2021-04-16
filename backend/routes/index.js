@@ -52,7 +52,7 @@ router.post("/register", async (req, res, next) => {
       await doc.save();
       await doc2.save();
       await doc3.save();
-      return res.status(200).json(doc).send();
+      return res.status(200).json(doc);
     }
   });
 });
@@ -60,19 +60,19 @@ router.post("/register", async (req, res, next) => {
 router.post("/login", async (req, res, next) => {
   return User.findOne({ email: req.body.email }, async (err, user) => {
     if (!user) {
-      return res.status(404).send({ message: "User Not found." });
+      return res.status(404).json({ message: "User Not found." });
     } else {
       var passwordIsValid = bcrypt.compareSync(
         req.body.password,
         user.password
       );
       if (!passwordIsValid) {
-        return res.status(401).send({
+        return res.status(401).json({
           accessToken: null,
           message: "Invalid Password!",
         });
       } else {
-        return res.status(200).send({
+        return res.status(200).json({
           _id: user._id,
           email: user.email,
           name: user.name,
@@ -119,7 +119,7 @@ router.get("/metadata", async (req, res, next) => {
       res.send(doc);
     }
   } catch (error) {
-    res.send(error);
+    res.status(400).json({ error: error.message });
   }
 });
 
@@ -128,10 +128,8 @@ router.get("/isPredictionReady", async (req, res, next) => {
     const doc = await getSymptoms(req.query.id);
     console.log(doc);
     if (!doc || Object.entries(doc).length === 0) {
-      res.sendStatus(404);
+      return res.sendStatus(404);
     } else {
-      console.log(doc);
-      res.status(200).json({ covid_infected: doc.covid_infected }).send();
       const l = await Symptoms.deleteOne({ _userID: ObjectId(req.body.id) });
 
       const l2 = await Sensors.deleteOne({ _userID: ObjectId(req.body.id) });
@@ -146,9 +144,17 @@ router.get("/isPredictionReady", async (req, res, next) => {
         _userID: req.body.id,
       });
       await doc3.save();
+
+      // ты, кажется, не можешь отправить ответ клиенту и потом что то делать
+      // вроде ответ клиенту должен быть самым последним
+      // когда это стояло наверху, метод сначала отправлял 200 ОК,
+      // но потом выходит Exception (чекни где именно)
+      // и затем снова в catch block отправляется ответ клиенту 400
+      // и за это он ругался
+      res.status(200).json({ covid_infected: doc.covid_infected });
     }
   } catch (error) {
-    res.send(error);
+    res.status(400).json({ error: error.message });
   }
 });
 
@@ -161,14 +167,14 @@ router.get("/getHealthInfo", async (req, res, next) => {
       survey = symptoms;
     }
     let thermometer = null;
-    if (sensors.thermometer != 0) {
+    if (sensors.thermometer != null) {
       thermometer = {
         value: sensors.thermometer,
         fever: sensors.fever,
       };
     }
     let spirometer = null;
-    if (sensors.spirometer != 0) {
+    if (sensors.spirometer != null) {
       spirometer = {
         value: sensors.spirometer,
         difficult_breathing: sensors.difficult_breathing,
@@ -176,10 +182,10 @@ router.get("/getHealthInfo", async (req, res, next) => {
       };
     }
     let pulseoximeter = null;
-    if (sensors.pulseoximeter != 0) {
+    if (sensors.pulseoximeter != null) {
       pulseoximeter = {
         value: sensors.pulseoximeter,
-        difficult_breathing: sensors.fatigue,
+        fatigue: sensors.fatigue,
       };
     }
     let result = {
@@ -192,9 +198,9 @@ router.get("/getHealthInfo", async (req, res, next) => {
       survey,
     };
     console.log(result);
-    res.status(200).json(result).send();
+    res.status(200).json(result);
   } catch (error) {
-    res.send(error);
+    res.status(400).json({ error: error.message });
   }
 });
 
@@ -214,13 +220,22 @@ router.get("/spirometer", async (req, res, next) => {
     const gender = user.gender;
     let doc = user;
     //if fev1
-    if ((gender == "male" && sensor_value < 3.5)||(gender == "female" && sensor_value < 2.5)) {
+    if (
+      (gender == "male" && sensor_value < 3.5) ||
+      (gender == "female" && sensor_value < 2.5)
+    ) {
       doc = await updateSensors(id, {
         pneumonia: 1,
         difficult_breathing: 1,
-        spirometer: sensor_value
+        spirometer: sensor_value,
       });
-    } 
+    } else {
+      doc = await updateSensors(id, {
+        pneumonia: 0,
+        difficult_breathing: 0,
+        spirometer: sensor_value,
+      });
+    }
     //CHEST PAIN ML
     //HEADACKE TRESHOLD HIGH BLOOD PRESSURE
     res.status(200).json(doc);
@@ -233,22 +248,22 @@ router.get("/spirometer", async (req, res, next) => {
 router.get("/pulseoximeter", async (req, res, next) => {
   try {
     //SEND TO ML SERVICE
-    console.log(req.query.i)
+    console.log(req.query.i);
     const data = await getUser(req.query.i);
     const result = await axios.get(
       `http://localhost:5000/pulseoximeter?s=${req.query.s}&age=${data.age}&gender=${data.gender}`
     );
     let percents = 0;
-    
+
     if (result.data.value != "2") {
-      percents = Number(result.data.percents)
-    } 
+      percents = Number(result.data.percents);
+    }
     const doc = await updateSensors(req.query.i, {
       fatigue: {
         value: 1,
         percents: percents,
       },
-      pulseoximeter:req.query.s
+      pulseoximeter: req.query.s,
     });
 
     res.status(200).json(doc);
@@ -263,23 +278,23 @@ router.get("/thermometer", async (req, res, next) => {
     console.log(req.query);
 
     const data = await getUser(req.query.i);
-    
+
     const sensor_value = req.query.s / 100;
     const result = await axios.get(
       `http://localhost:5000/thermometer?s=${req.query.s}&age=${data.age}&gender=${data.gender}`
     );
     let percents = 0;
     if (result.data.value != "2") {
-      percents = Number(result.data.percents)
-    } 
+      percents = Number(result.data.percents);
+    }
     const doc = await updateSensors(req.query.i, {
       fever: {
         value: 1,
         percents: percents,
       },
-      thermometer: sensor_value
+      thermometer: sensor_value,
     });
-    res.status(200).json(doc).send();
+    res.status(200).json(doc);
   } catch (error) {
     res.status(500).send(error);
   }
@@ -300,18 +315,8 @@ router.get("/thermometer", async (req, res, next) => {
 router.post("/symptoms", async (req, res) => {
   try {
     const { id, symptoms } = req.body;
-    // const filteredSymptoms = Object.entries(symptoms).reduce((acc, cur) => {
-    //   if (cur[1] === 1) {
-    //     acc[cur[0]] = 1;
-    //   }
-    //   return acc;
-    // }, {});
-
     console.log(symptoms);
-
-    const doc = await updateSymptoms(id, symptoms);
-    const d = await updateSymptoms(id, {"submitted":true});
-    await d.save()
+    const doc = await updateSymptoms(id, { ...symptoms, submitted: true });
     res.status(200).send(doc);
   } catch {
     res.status(500).send();
@@ -331,7 +336,7 @@ router.get("/graph", async (req, res, next) => {
     res.send(graphData);
   } catch (error) {
     console.log(error.stack);
-    res.send(error);
+    res.status(400).json({ error: error.message });
   }
 });
 

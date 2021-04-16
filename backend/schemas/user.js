@@ -48,18 +48,18 @@ const symptomsSchema = new Schema({
     type: Number,
     default: 0,
   },
-  pneumonia: {
-    type: Number,
-    default: 0,
-  },
+  // pneumonia: {
+  //   type: Number,
+  //   default: 0,
+  // },
   cold: {
     type: Number,
     default: 0,
   },
-  fever: {
-    type: Number,
-    default: 0,
-  },
+  // fever: {
+  //   type: Number,
+  //   default: 0,
+  // },
   sneeze: {
     type: Number,
     default: 0,
@@ -76,10 +76,10 @@ const symptomsSchema = new Schema({
     type: Number,
     default: 0,
   },
-  difficult_breathing: {
-    type: Number,
-    default: 0,
-  },
+  // difficult_breathing: {
+  //   type: Number,
+  //   default: 0,
+  // },
   chest_pain: {
     type: Number,
     default: 0,
@@ -92,10 +92,10 @@ const symptomsSchema = new Schema({
     type: Number,
     default: 0,
   },
-  fatigue: {
-    type: Number,
-    default: 0,
-  },
+  // fatigue: {
+  //   type: Number,
+  //   default: 0,
+  // },
   flu: {
     type: Number,
     default: 0,
@@ -173,7 +173,7 @@ const sensorsSchema = new Schema({
   },
   pulseoximeter: {
     type: Number,
-    default:0
+    default: 0,
   },
   fatigue: {
     value: {

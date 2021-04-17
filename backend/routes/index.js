@@ -126,22 +126,22 @@ router.get("/metadata", async (req, res, next) => {
 router.get("/isPredictionReady", async (req, res, next) => {
   try {
     const doc = await getSymptoms(req.query.id);
-    console.log(doc);
+    console.log("got symptoms", doc);
     if (!doc || Object.entries(doc).length === 0) {
       return res.sendStatus(404);
     } else {
       const l = await Symptoms.deleteOne({ _userID: ObjectId(req.body.id) });
-
+      console.log("l", l);
       const l2 = await Sensors.deleteOne({ _userID: ObjectId(req.body.id) });
-      console.log(l);
-      console.log(l2);
+      console.log("l2", l2);
+
       doc2 = new Symptoms({
-        _userID: req.body.id,
+        _userID: req.query.id,
       });
       await doc2.save();
 
       doc3 = new Sensors({
-        _userID: req.body.id,
+        _userID: req.query.id,
       });
       await doc3.save();
 
@@ -167,14 +167,14 @@ router.get("/getHealthInfo", async (req, res, next) => {
       survey = symptoms;
     }
     let thermometer = null;
-    if (sensors.thermometer != null) {
+    if (sensors.thermometer != 0) {
       thermometer = {
         value: sensors.thermometer,
         fever: sensors.fever,
       };
     }
     let spirometer = null;
-    if (sensors.spirometer != null) {
+    if (sensors.spirometer != 0) {
       spirometer = {
         value: sensors.spirometer,
         difficult_breathing: sensors.difficult_breathing,
@@ -182,7 +182,7 @@ router.get("/getHealthInfo", async (req, res, next) => {
       };
     }
     let pulseoximeter = null;
-    if (sensors.pulseoximeter != null) {
+    if (sensors.pulseoximeter != 0) {
       pulseoximeter = {
         value: sensors.pulseoximeter,
         fatigue: sensors.fatigue,
@@ -366,7 +366,7 @@ router.post("/test2", async (req, res, next) => {
 
 module.exports = router;
 /*
-
+   
     var sputum: Int? = null,
     var muscle_pain: Int? = null,
     var sore_throat: Int? = null,

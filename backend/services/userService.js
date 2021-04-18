@@ -8,7 +8,9 @@ const getUser = async (id) => {
 };
 
 const getSymptoms = async (id) => {
+  console.log(id);
   const doc = await Symptoms.findOne({ _userID: ObjectId(id) });
+  console.log(doc);
 
   return doc;
 };

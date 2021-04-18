@@ -3,7 +3,6 @@ const axios = require("axios");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const { User, Symptoms, Sensors } = require("../schemas/user");
-const ObjectId = require("mongodb").ObjectId;
 const {
   getUser,
   getSensors,
@@ -16,11 +15,7 @@ const {
 
 const { sendSmS } = require("../services/smsService");
 
-const {
-  writeSensors,
-  getAllSensors,
-  getSensorsById,
-} = require("../services/sensorService");
+const { getSensorsById } = require("../services/sensorService");
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
@@ -92,6 +87,9 @@ router.post("/predict", async (req, res, next) => {
     const body = Object.assign({}, metadata, symptoms, sensors);
 
     const result = await axios.post("http://localhost:5000/covid", body); //symptoms gender age
+    const doc = await updateSymptoms(req.body.id, {
+      covid_infected: result.data,
+    });
 
     // if (+result.data > 0) {
     //   const people = await findClosePeople({
@@ -103,7 +101,8 @@ router.post("/predict", async (req, res, next) => {
     // }
 
     // await sendSmS(`00${metadata.phone}`, +result.data);
-    res.send(String(result.data));
+
+    res.send(JSON.stringify(result.data));
   } catch (error) {
     console.error(error.stack);
     res.sendStatus(500);
@@ -126,33 +125,37 @@ router.get("/metadata", async (req, res, next) => {
 router.get("/isPredictionReady", async (req, res, next) => {
   try {
     const doc = await getSymptoms(req.query.id);
+    const metadata = await getUser(req.query.id);
+    const sensors = await getSensors(req.query.id);
+    const body = Object.assign({}, sensors._doc, doc._doc, metadata._doc);
+
+    console.log("got meta", metadata);
+    console.log("got sensors", sensors);
     console.log("got symptoms", doc);
-    if (!doc || Object.entries(doc).length === 0) {
-      return res.sendStatus(404);
-    } else {
-      const l = await Symptoms.deleteOne({ _userID: ObjectId(req.body.id) });
-      console.log("l", l);
-      const l2 = await Sensors.deleteOne({ _userID: ObjectId(req.body.id) });
-      console.log("l2", l2);
+    console.log("f",body)
 
-      doc2 = new Symptoms({
-        _userID: req.query.id,
-      });
-      await doc2.save();
+    // const l = await Symptoms.deleteOne({ _userID: ObjectId(req.body.id) });
+    // console.log("l", l);
+    // const l2 = await Sensors.deleteOne({ _userID: ObjectId(req.body.id) });
+    // console.log("l2", l2);
 
-      doc3 = new Sensors({
-        _userID: req.query.id,
-      });
-      await doc3.save();
+    // doc2 = new Symptoms({
+    //   _userID: req.query.id,
+    // });
+    // await doc2.save();
 
-      // ты, кажется, не можешь отправить ответ клиенту и потом что то делать
-      // вроде ответ клиенту должен быть самым последним
-      // когда это стояло наверху, метод сначала отправлял 200 ОК,
-      // но потом выходит Exception (чекни где именно)
-      // и затем снова в catch block отправляется ответ клиенту 400
-      // и за это он ругался
-      res.status(200).json({ covid_infected: doc.covid_infected });
-    }
+    // doc3 = new Sensors({
+    //   _userID: req.query.id,
+    // });
+    // await doc3.save();
+
+    // ты, кажется, не можешь отправить ответ клиенту и потом что то делать
+    // вроде ответ клиенту должен быть самым последним
+    // когда это стояло наверху, метод сначала отправлял 200 ОК,
+    // но потом выходит Exception (чекни где именно)
+    // и затем снова в catch block отправляется ответ клиенту 400
+    // и за это он ругался
+    res.status(200).json(body);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -200,6 +203,7 @@ router.get("/getHealthInfo", async (req, res, next) => {
     console.log(result);
     res.status(200).json(result);
   } catch (error) {
+    console.log(error.stack);
     res.status(400).json({ error: error.message });
   }
 });
@@ -218,7 +222,7 @@ router.get("/spirometer", async (req, res, next) => {
 
     const user = await getUser(id);
     const gender = user.gender;
-    let doc = user;
+    let doc;
     //if fev1
     if (
       (gender == "male" && sensor_value < 3.5) ||
@@ -227,15 +231,17 @@ router.get("/spirometer", async (req, res, next) => {
       doc = await updateSensors(id, {
         pneumonia: 1,
         difficult_breathing: 1,
-        spirometer: sensor_value,
       });
     } else {
       doc = await updateSensors(id, {
-        pneumonia: 0,
-        difficult_breathing: 0,
-        spirometer: sensor_value,
+        pneumonia: 2,
+        difficult_breathing: 2,
       });
     }
+    doc = await updateSensors(id, {
+      spirometer: sensor_value,
+    });
+
     //CHEST PAIN ML
     //HEADACKE TRESHOLD HIGH BLOOD PRESSURE
     res.status(200).json(doc);
@@ -281,20 +287,28 @@ router.get("/thermometer", async (req, res, next) => {
 
     const sensor_value = req.query.s / 100;
     const result = await axios.get(
-      `http://localhost:5000/thermometer?s=${req.query.s}&age=${data.age}&gender=${data.gender}`
+      `http://localhost:5000/thermometer?s=${sensor_value}&age=${data.age}&gender=${data.gender}`
     );
     let percents = 0;
-    if (result.data.value != "2") {
+    let doc;
+    if (result.data.value == "1") {
       percents = Number(result.data.percents);
+      doc = await updateSensors(req.query.i, {
+        fever: {
+          value: 1,
+          percents: percents,
+        },
+        thermometer: sensor_value,
+      });
+    } else {
+      doc = await updateSensors(req.query.i, {
+        fever: {
+          value: 2,
+        },
+        thermometer: sensor_value,
+      });
     }
-    const doc = await updateSensors(req.query.i, {
-      fever: {
-        value: 1,
-        percents: percents,
-      },
-      thermometer: sensor_value,
-    });
-    res.status(200).json(doc);
+    res.status(200).json(doc).send();
   } catch (error) {
     res.status(500).send(error);
   }

@@ -79,17 +79,52 @@ router.post("/login", async (req, res, next) => {
   });
 });
 
-router.post("/predict", async (req, res, next) => {
+function delay(amount, infected) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        data: {
+          value: infected ? 1 : 0,
+          percents: infected ? 77 : 0,
+        },
+      });
+    }, amount);
+  });
+}
+
+router.get("/predict", async (req, res, next) => {
   try {
-    const metadata = await getUser(req.body.id);
-    const symptoms = await getSymptoms(req.body.id);
-    const sensors = await getSensors(req.body.id);
+    const metadata = await getUser(req.query.id);
+    const symptoms = await getSymptoms(req.query.id);
+    const sensors = await getSensors(req.query.id);
     const body = Object.assign({}, metadata, symptoms, sensors);
 
     const result = await axios.post("http://localhost:5000/covid", body); //symptoms gender age
-    const doc = await updateSymptoms(req.body.id, {
-      covid_infected: result.data,
-    });
+    symptoms.covid_infected = result.data;
+
+    const updated = Object.assign(
+      {},
+      sensors._doc,
+      symptoms._doc,
+      metadata._doc
+    );
+
+    if (result.data.value > 0) {
+      const l = await Symptoms.deleteOne({ _userID: req.query.id });
+      console.log("l", l);
+      const l2 = await Sensors.deleteOne({ _userID: req.query.id });
+      console.log("l2", l2);
+
+      doc2 = new Symptoms({
+        _userID: req.query.id,
+      });
+      await doc2.save();
+
+      doc3 = new Sensors({
+        _userID: req.query.id,
+      });
+      await doc3.save();
+    }
 
     // if (+result.data > 0) {
     //   const people = await findClosePeople({
@@ -102,12 +137,42 @@ router.post("/predict", async (req, res, next) => {
 
     // await sendSmS(`00${metadata.phone}`, +result.data);
 
-    res.send(JSON.stringify(result.data));
+    res.json(updated);
   } catch (error) {
     console.error(error.stack);
     res.sendStatus(500);
   }
 });
+
+// router.post("/predict", async (req, res, next) => {
+//   try {
+//     const metadata = await getUser(req.body.id);
+//     const symptoms = await getSymptoms(req.body.id);
+//     const sensors = await getSensors(req.body.id);
+//     const body = Object.assign({}, metadata, symptoms, sensors);
+
+//     const result = await axios.post("http://localhost:5000/covid", body); //symptoms gender age
+//     const doc = await updateSymptoms(req.body.id, {
+//       covid_infected: result.data,
+//     });
+
+//     // if (+result.data > 0) {
+//     //   const people = await findClosePeople({
+//     //     lon: metadata.location[0],
+//     //     lat: metadata.location[1],
+//     //   });
+//     //   console.log("The following people would be notified");
+//     //   console.log(people);
+//     // }
+
+//     // await sendSmS(`00${metadata.phone}`, +result.data);
+
+//     res.send(JSON.stringify(result.data));
+//   } catch (error) {
+//     console.error(error.stack);
+//     res.sendStatus(500);
+//   }
+// });
 
 router.get("/metadata", async (req, res, next) => {
   try {
@@ -132,7 +197,7 @@ router.get("/isPredictionReady", async (req, res, next) => {
     console.log("got meta", metadata);
     console.log("got sensors", sensors);
     console.log("got symptoms", doc);
-    console.log("f",body)
+    console.log("f", body);
 
     // const l = await Symptoms.deleteOne({ _userID: ObjectId(req.body.id) });
     // console.log("l", l);

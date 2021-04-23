@@ -129,10 +129,6 @@ router.get("/isPredictionReady", async (req, res, next) => {
     const sensors = await getSensors(req.query.id);
     const body = Object.assign({}, sensors._doc, doc._doc, metadata._doc);
 
-    console.log("got meta", metadata);
-    console.log("got sensors", sensors);
-    console.log("got symptoms", doc);
-    console.log("f",body)
 
     // const l = await Symptoms.deleteOne({ _userID: ObjectId(req.body.id) });
     // console.log("l", l);
@@ -244,6 +240,7 @@ router.get("/spirometer", async (req, res, next) => {
 
     //CHEST PAIN ML
     //HEADACKE TRESHOLD HIGH BLOOD PRESSURE
+    console.log(doc)
     res.status(200).json(doc);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -260,13 +257,14 @@ router.get("/pulseoximeter", async (req, res, next) => {
       `http://localhost:5000/pulseoximeter?s=${req.query.s}&age=${data.age}&gender=${data.gender}`
     );
     let percents = 0;
-
-    if (result.data.value != "2") {
+    let value = 2;
+    if (result.data.value == "1") {
       percents = Number(result.data.percents);
+      value = 1;
     }
     const doc = await updateSensors(req.query.i, {
       fatigue: {
-        value: 1,
+        value: value,
         percents: percents,
       },
       pulseoximeter: req.query.s,

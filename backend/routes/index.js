@@ -321,13 +321,14 @@ router.get("/pulseoximeter", async (req, res, next) => {
       `http://localhost:5000/pulseoximeter?s=${req.query.s}&age=${data.age}&gender=${data.gender}`
     );
     let percents = 0;
-
-    if (result.data.value != "2") {
+    let value = 2;
+    if (result.data.value == "1") {
       percents = Number(result.data.percents);
+      value = 1;
     }
     const doc = await updateSensors(req.query.i, {
       fatigue: {
-        value: 1,
+        value: value,
         percents: percents,
       },
       pulseoximeter: req.query.s,

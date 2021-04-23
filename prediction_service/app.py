@@ -43,9 +43,15 @@ def predict():
 def pulseoximeter():
     age = request.args.get('age')
     gender = request.args.get('gender')
-    value = request.args.get('s')
+    value = float(request.args.get('s'))
 
     print(age, gender, value)
+        
+    if value > 90:
+        return jsonify(
+            value = '2',
+            percents = 0
+        )
 
     input_data = {age, gender, value}
     
@@ -71,7 +77,15 @@ def pulseoximeter():
 def termometer():
     age = request.args.get('age')
     gender = request.args.get('gender')
-    value = request.args.get('s')
+    value = float(request.args.get('s'))
+
+    if value < 37.5:
+        return jsonify(
+            value = '2',
+            percents = 0
+        )
+
+
 
     print(age, gender, value)
 

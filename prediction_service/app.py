@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 state = False
 fun1 = lambda x: '1' if x < '40' else '2'
-fun2 = lambda x: '1' if x < '35' else '2'
+fun2 = lambda x: '1' if x < '70' else '2'
 fun3 = lambda x: random.randint(1,2) if True else state
 
 

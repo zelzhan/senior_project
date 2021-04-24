@@ -123,9 +123,15 @@ def covid():
 
     if state:
         res = model.predict(0)
+
+
+    value = str(fun3(state))
+    percents = random.uniform(73.0, 83.0)
     
+    if value == 2:
+        percents = 0
 
     return str(res) if res else jsonify(
-        value = str(fun3(state)),
-        percents = random.uniform(73.0, 83.0)
+        value = value,
+        percents = percents
     )
